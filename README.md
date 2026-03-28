@@ -1,20 +1,34 @@
 # TS-Sticky-Gateway 🚀
 
-A high-performance Layer 7 Load Balancer built with TypeScript.
+A high-performance, deterministic Layer 7 Load Balancer built with **TypeScript** and **Express**.
 
-## Features
-- **IP Hashing (Sticky Sessions):** Maps clients to specific backend servers using their IP address.
-- **Smart Failover:** If a "sticky" server goes down, the balancer automatically routes to the next available healthy node.
-- **Active Health Checks:** Periodically pings backends to ensure traffic is only sent to live instances.
-- **Reverse Proxy:** Transparently forwards requests using `http-proxy`.
+## 📖 Overview
+This project is an API Gateway that sits in front of multiple backend services. It uses **IP Hashing** to ensure that a specific client is always routed to the same backend server (Session Persistence), while providing a **Linear Probing** failover mechanism if the primary server goes offline.
 
-## How it Works
-1. **Request Ingress:** A client hits the gateway at port 8000.
-2. **Hashing:** We take the `x-forwarded-for` or `remoteAddress` and hash it.
-3. **Health Validation:** We check the `isHealthy` status of the resulting server.
-4. **Proxy:** If healthy, the request is piped; if not, we move to the next index in the server array.
+## ✨ Features
+- **Deterministic IP Hashing:** Uses MD5 hashing on Client IPs to map requests to specific server indices.
+- **Smart Failover:** Automatically "probes" the next available index in the server array if the hashed target is unhealthy.
+- **Reverse Proxy:** Efficiently pipes Request/Response streams using `http-proxy`.
+- **Active Health Monitoring:** (In Progress) A background heartbeat system to dynamically update server availability.
+- **Type Safety:** Fully written in TypeScript for robust development and error catching.
 
-## Setup
-1. `npm install`
-2. Update `src/config.ts` with your backend server URLs.
-3. `npm run dev` to start the balancer.
+## ⚙️ How it Works
+1. **Ingress:** A request hits the gateway. The middleware extracts the Client IP (handling `x-forwarded-for` headers).
+2. **The Hash:** The IP string is converted into a numeric hash.
+3. **The Modulo:** We apply `Hash % ServerCount` to find the target index.
+4. **Health Check:** - If `Servers[index].isHealthy` is **true**, the request is proxied.
+   - If **false**, the balancer increments the index (+1) and checks the next server until a healthy one is found.
+5. **Egress:** The `http-proxy` engine handles the data stream between the client and the chosen backend.
+
+## 🛠️ Project Roadmap
+- [x] Initial Express + TypeScript boilerplate.
+- [x] Implementation of the Hashing/Modulo selection algorithm.
+- [x] Integration of `http-proxy` for request forwarding.
+- [ ] **Next Step:** Implement automated background health checks via Axios.
+- [ ] **Next Step:** Add a Dashboard/Logger to visualize traffic distribution.
+
+## 🚀 Setup & Installation
+1. **Clone the repo:**
+   ```bash
+   git clone [https://github.com/your-username/ts-sticky-gateway.git](https://github.com/your-username/ts-sticky-gateway.git)
+   cd ts-sticky-gateway
