@@ -25,6 +25,14 @@ app.all("*", async (req: Request, res: Response) => {
 
   const target = servers[serverIndex];
 
+  
+  if (!target) {
+    console.error("Critical: No healthy backend found for request.");
+    return res.status(503).send("Service Unavailable: No healthy backends.");
+  }
+  
+  console.log(`Forwarding request from ${clientIdentifier} to ${target.url}`);
+
   proxyServer.web(req, res, { target: target.url }, (error) => {
     console.log(`proxy error:  ${error}`);
     res.status(502).send("Bad Gateway");
