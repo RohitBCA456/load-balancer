@@ -1,34 +1,93 @@
-# TS-Sticky-Gateway 🚀
+# 🚀 High-Availability TypeScript Load Balancer
 
-A high-performance, deterministic Layer 7 Load Balancer built with **TypeScript** and **Express**.
+A professional-grade Layer 7 Load Balancer built with **Node.js** and **TypeScript**. This project implements **IP Hashing** for session persistence and a **Background Monitor** for real-time health checks and automatic failover.
 
-## 📖 Overview
-This project is an API Gateway that sits in front of multiple backend services. It uses **IP Hashing** to ensure that a specific client is always routed to the same backend server (Session Persistence), while providing a **Linear Probing** failover mechanism if the primary server goes offline.
+---
 
-## ✨ Features
-- **Deterministic IP Hashing:** Uses MD5 hashing on Client IPs to map requests to specific server indices.
-- **Smart Failover:** Automatically "probes" the next available index in the server array if the hashed target is unhealthy.
-- **Reverse Proxy:** Efficiently pipes Request/Response streams using `http-proxy`.
-- **Active Health Monitoring:** (In Progress) A background heartbeat system to dynamically update server availability.
-- **Type Safety:** Fully written in TypeScript for robust development and error catching.
+## 📂 Project Structure
 
-## ⚙️ How it Works
-1. **Ingress:** A request hits the gateway. The middleware extracts the Client IP (handling `x-forwarded-for` headers).
-2. **The Hash:** The IP string is converted into a numeric hash.
-3. **The Modulo:** We apply `Hash % ServerCount` to find the target index.
-4. **Health Check:** - If `Servers[index].isHealthy` is **true**, the request is proxied.
-   - If **false**, the balancer increments the index (+1) and checks the next server until a healthy one is found.
-5. **Egress:** The `http-proxy` engine handles the data stream between the client and the chosen backend.
+```text
+├── algorithm
+│   └── IP-hasing.ts     # SHA-256 Hashing & Linear Probing logic
+├── core
+│   ├── health-check.ts  # Logic for pinging /health endpoints
+│   ├── monitor.ts       # Background setInterval loop for status updates
+│   └── proxy-engine.ts  # http-proxy setup with body-restreaming fix
+├── test
+│   └── test-servers.ts  # Mock backend instances (Ports 3001-3003)
+├── types
+│   └── index.ts         # Centralized TypeScript interfaces
+├── config.ts            # Environment and server pool configurations
+└── server.ts            # Entry point & Express Gateway
+```
 
-## 🛠️ Project Roadmap
-- [x] Initial Express + TypeScript boilerplate.
-- [x] Implementation of the Hashing/Modulo selection algorithm.
-- [x] Integration of `http-proxy` for request forwarding.
-- [ ] **Next Step:** Implement automated background health checks via Axios.
-- [ ] **Next Step:** Add a Dashboard/Logger to visualize traffic distribution.
+---
 
-## 🚀 Setup & Installation
-1. **Clone the repo:**
-   ```bash
-   git clone [https://github.com/your-username/ts-sticky-gateway.git](https://github.com/your-username/ts-sticky-gateway.git)
-   cd ts-sticky-gateway
+## ✨ Key Features
+
+1. **Sticky Sessions (IP Hashing)**
+   - Uses the client's IP address to generate a consistent hash
+   - Ensures users are always routed to the same backend server
+   - Critical for applications relying on local session data
+
+2. **Intelligent Failover**
+   - If the primary hashed server is down, the system utilizes Linear Probing
+   - Checks the next available server in the pool until a healthy one is found
+   - Ensures zero downtime for users
+
+3. **Real-time Health Monitoring**
+   - Background "heartbeat" service pings backends every 3 seconds
+   - Servers returning non-200 responses are instantly pulled from rotation
+   - Automatic recovery when servers come back online
+
+4. **POST Body Support**
+   - Custom `proxyReq` interceptor re-streams buffered JSON data
+   - Solves the common "Proxy Hang" issue with Express middleware and http-proxy
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+
+- Node.js (v18+)
+- npm or yarn
+
+### Installation
+
+```bash
+git clone https://github.com/RohitBCA456/load-balancer.git
+cd load-balancer
+npm install
+```
+
+### Running the System
+
+**Start the Backend Servers:**
+
+```bash
+npx ts-node src/test/test-servers.ts
+```
+
+**Start the Load Balancer (in a separate terminal):**
+
+```bash
+npm run dev
+```
+
+---
+
+## 🧪 Testing the Load Balancer
+
+- **Standard Request:** Open http://localhost:8000 in your browser to see a response from a specific port
+- **Sticky Session Test:** Refresh the page to verify you stay on the same port
+- **Failover Test:** Stop one test server and watch automatic routing to healthy peers
+- **Data Test:** Send a POST request via curl
+
+```bash
+curl -X POST http://localhost:8000/data \
+  -H "Content-Type: application/json" \
+  -d '{"user":"rohit"}'
+```
+
+---

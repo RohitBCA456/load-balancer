@@ -19,7 +19,7 @@ app.use(express.json());
 
 monitor(servers);
 
-app.all("*", async (req: Request, res: Response) => {
+app.all("*", async (req: Request, res: Response): Promise<unknown> => {
   const clientIdentifier = req.ip || "unknown";
 
   console.log(`Request coming from IP: ${clientIdentifier}`);

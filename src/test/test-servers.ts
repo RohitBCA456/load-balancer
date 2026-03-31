@@ -1,6 +1,6 @@
 import express from "express";
 
-const createBackend = (port: number) => {
+const createBackend = (port: number): void => {
   const app = express();
   app.use(express.json());
 

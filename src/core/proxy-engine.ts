@@ -3,7 +3,7 @@ import httpProxy from "http-proxy";
 
 const proxyServer = httpProxy.createProxyServer({});
 
-proxyServer.on("proxyReq", (proxyReq, req: any) => {
+proxyServer.on("proxyReq", (proxyReq, req: any): void => {
   if (req.body && Object.keys(req.body).length > 0) {
     const bodyData = JSON.stringify(req.body);
 
@@ -14,7 +14,7 @@ proxyServer.on("proxyReq", (proxyReq, req: any) => {
 });
 
 
-export const forwardRequest = (targetUrl: string, req: Request, res: Response) => {
+export const forwardRequest = (targetUrl: string, req: Request, res: Response): void => {
   proxyServer.web(req, res, { target: targetUrl }, (err) => {
     console.error(`[Proxy Error] to ${targetUrl}:`, err.message);
     
