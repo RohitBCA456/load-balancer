@@ -33,7 +33,7 @@ app.all("*", async (req: Request, res: Response): Promise<unknown> => {
     return res.status(503).send("Service Unavailable: No healthy backends.");
   }
 
-  forwardRequest(target.url, req, res);
+  forwardRequest(servers, target.url, req, res);
 });
 
 const PORT = process.env.PORT;
