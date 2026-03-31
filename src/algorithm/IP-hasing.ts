@@ -22,7 +22,15 @@ export const getServer = async (
 
   const hashInt = parseInt(hash, 16);
 
-  const serverIndex = hashInt % healthySevers.length;
+  let serverIndex = hashInt % healthySevers.length;
+
+  if (serverIndex) {
+    const isAlive = servers[serverIndex]?.isHealthy;
+
+    if (!isAlive) {
+      serverIndex = (serverIndex + 1) % healthySevers.length;
+    }
+  }
 
   console.log(
     `selected server index for client ${clientIdentifier}: ${serverIndex}`,

@@ -1,8 +1,9 @@
 import dotenv from "dotenv";
 import { BackendServers } from "./types";
 import express, { Request, Response } from "express";
-import httpProxy from "http-proxy";
 import { getServer } from "./algorithm/IP-hasing";
+import { forwardRequest } from "./core/proxy-engine";
+import { monitor } from "./core/monitor";
 
 dotenv.config({ path: "./.env" });
 
@@ -14,7 +15,9 @@ const servers: BackendServers[] = [
 
 const app = express();
 
-const proxyServer = httpProxy.createProxyServer({});
+app.use(express.json());
+
+monitor(servers);
 
 app.all("*", async (req: Request, res: Response) => {
   const clientIdentifier = req.ip || "unknown";
@@ -25,18 +28,12 @@ app.all("*", async (req: Request, res: Response) => {
 
   const target = servers[serverIndex];
 
-  
   if (!target) {
     console.error("Critical: No healthy backend found for request.");
     return res.status(503).send("Service Unavailable: No healthy backends.");
   }
-  
-  console.log(`Forwarding request from ${clientIdentifier} to ${target.url}`);
 
-  proxyServer.web(req, res, { target: target.url }, (error) => {
-    console.log(`proxy error:  ${error}`);
-    res.status(502).send("Bad Gateway");
-  });
+  forwardRequest(target.url, req, res);
 });
 
 const PORT = process.env.PORT;
